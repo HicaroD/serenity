@@ -16,7 +16,6 @@ var initCmd = &cobra.Command{
 	},
 }
 
-// NOTE: quais flags posso receber aq?
 func init() {
 	rootCmd.AddCommand(initCmd)
 }

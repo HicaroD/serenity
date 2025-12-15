@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/almeidazs/gowther/internal"
+	"github.com/almeidazs/gowther/internal/linter"
 )
 
 var configFile = "gowther.json"
@@ -17,25 +17,34 @@ func GetPath() (path string, err error) {
 		return "", fmt.Errorf("error to get user working directory: %w", err)
 	}
 
-	return path, nil
+	return filepath.Join(path, "gowther.json"), nil
 }
 
 func CreateConfigFile(path string) error {
-	_, err := os.Create(filepath.Join(path, configFile))
+	_, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("error creating config file: %w", err)
 	}
+
+	cfg := GenDefaultConfig()
+	jsonData, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return fmt.Errorf("error marshalling JSON: %v", err)
+	}
+
+	err = os.WriteFile("gowther.json", jsonData, 0o644)
+	if err != nil {
+		return fmt.Errorf("error writing gowther.json: %v", err)
+	}
+
 	return nil
 }
 
 func CheckHasConfigFile(path string) (bool, error) {
-	configFile := filepath.Join(path, configFile)
-	if _, err := os.Stat(configFile); err != nil {
+	if _, err := os.Stat(path); err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
 		}
-
-		// TODO: criar write (escrever dentro do arquivo o JSON)
 
 		return false, fmt.Errorf("error to get file info: %w", err)
 	}
@@ -43,21 +52,19 @@ func CheckHasConfigFile(path string) (bool, error) {
 	return true, nil
 }
 
-func ReadConfigFile(path string) (*internal.Config, error) {
-	configPath := filepath.Join(path, configFile)
-	fileBytes, err := os.ReadFile(configPath)
+func ReadConfigFile(path string) (*linter.Config, error) {
+	var cfg *linter.Config
+	fileBytes, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("config file '%s' not found", configPath)
+			return nil, fmt.Errorf("config file '%s' not found", path)
 		}
 		return nil, fmt.Errorf("error reading config file: %w", err)
 	}
 
-	var config internal.Config
-
-	if err := json.Unmarshal(fileBytes, &config); err != nil {
+	if err := json.Unmarshal(fileBytes, &cfg); err != nil {
 		return nil, fmt.Errorf("error parsing config file json: %w", err)
 	}
 
-	return &config, nil
+	return cfg, nil
 }

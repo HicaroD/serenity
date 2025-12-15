@@ -13,17 +13,19 @@ type Linter struct {
 	Write  bool
 	Unsafe bool
 	Fset   *token.FileSet
+	Config *Config
 }
 
-func New(write, unsafe bool) *Linter {
+func New(write, unsafe bool, config *Config) *Linter {
 	return &Linter{
 		Write:  write,
 		Unsafe: unsafe,
 		Fset:   token.NewFileSet(),
+		Config: config,
 	}
 }
 
-func (l *Linter) ProcessPath(path string, doFormat, checkOnly bool) error {
+func (l *Linter) ProcessPath(path string) error {
 	info, err := os.Stat(path)
 	if err != nil {
 		return err
@@ -45,17 +47,17 @@ func (l *Linter) ProcessPath(path string, doFormat, checkOnly bool) error {
 			}
 
 			if strings.HasSuffix(p, ".go") && !strings.Contains(p, "vendor/") {
-				return l.ProcessFile(p, doFormat, checkOnly)
+				return l.ProcessFile(p)
 			}
 
 			return nil
 		})
 	}
 
-	return l.ProcessFile(path, doFormat, checkOnly)
+	return l.ProcessFile(path)
 }
 
-func (l *Linter) ProcessFile(filename string, doFormat, checkOnly bool) error {
+func (l *Linter) ProcessFile(filename string) error {
 	src, err := os.ReadFile(filename)
 	if err != nil {
 		return err
@@ -65,8 +67,6 @@ func (l *Linter) ProcessFile(filename string, doFormat, checkOnly bool) error {
 	if err != nil {
 		return fmt.Errorf("parse error in %s: %v", filename, err)
 	}
-
-	// TODO: format if its needed
 
 	return nil
 }
