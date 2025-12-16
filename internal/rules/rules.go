@@ -10,6 +10,7 @@ type Config struct {
 	ErrorHandling *ErrorHandlingRuleGroup `json:"errorHandling,omitempty"`
 	Imports       *ImportsRuleGroup       `json:"imports,omitempty"`
 	Exclude       []string                `json:"exclude,omitempty"`
+	MaxFileSize   int64                   `json:"maxFileSize,omitempty"`
 }
 
 type NamingRuleGroup struct {

@@ -12,21 +12,21 @@ import (
 )
 
 var checkCmd = &cobra.Command{
+	RunE:  Check,
 	Use:   "check [path...]",
 	Short: "Check code for issues",
-	RunE:  check,
 }
 
 var checkWrite, checkUnsafe bool
 
 func init() {
-	checkCmd.Flags().BoolVarP(&checkWrite, "write", "w", false, "Write changes to files")
 	checkCmd.Flags().BoolVarP(&checkUnsafe, "unsafe", "u", false, "Apply unsafe fixes")
+	checkCmd.Flags().BoolVarP(&checkWrite, "write", "w", false, "Write changes to files")
 
 	rootCmd.AddCommand(checkCmd)
 }
 
-func check(cmd *cobra.Command, args []string) error {
+func Check(cmd *cobra.Command, args []string) error {
 	var linterCfg *rules.Config
 
 	path, err := config.GetConfigFilePath()
@@ -57,7 +57,7 @@ func check(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	l := linter.New(checkWrite, checkUnsafe, linterCfg, maxIssues)
+	l := linter.New(checkWrite, checkUnsafe, linterCfg, maxIssues, linterCfg.MaxFileSize)
 
 	for _, v := range args {
 		if v == "" || v == "." {

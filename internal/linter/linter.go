@@ -13,29 +13,35 @@ import (
 )
 
 type Linter struct {
-	Write     bool
-	Unsafe    bool
-	MaxIssues int // Para ser ilimitado = 0
-	Config    *rules.Config
+	Write       bool
+	Unsafe      bool
+	MaxIssues   int // 0 = unlimited
+	MaxFileSize int64
+	Config      *rules.Config
 }
 
-func New(write, unsafe bool, config *rules.Config, maxIssues int) *Linter {
+func New(write, unsafe bool, config *rules.Config, maxIssues int, maxFileSize int64) *Linter {
 	return &Linter{
-		Write:     write,
-		Unsafe:    unsafe,
-		Config:    config,
-		MaxIssues: maxIssues,
+		Write:       write,
+		Unsafe:      unsafe,
+		Config:      config,
+		MaxIssues:   maxIssues,
+		MaxFileSize: maxFileSize,
 	}
 }
 
 func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 	info, err := os.Stat(root)
-	
+
 	if err != nil {
 		return nil, err
 	}
 
 	if !info.IsDir() {
+		if l.MaxFileSize > 0 && info.Size() > l.MaxFileSize {
+			return nil, nil
+		}
+
 		return processSingleFile(root)
 	}
 
@@ -43,7 +49,10 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 
 	paths := make(chan string, workers*4)
 	results := make(chan []rules.Issue, workers)
+
 	done := make(chan struct{})
+
+	var stopOnce sync.Once
 
 	var total int64
 	var wg sync.WaitGroup
@@ -87,7 +96,6 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 
 					if len(local) > 0 {
 						out := make([]rules.Issue, len(local))
-
 						copy(out, local)
 
 						select {
@@ -114,21 +122,30 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 			}
 
 			if d.IsDir() {
-				name := d.Name()
-
-				if name == "vendor" || name == ".git" {
+				switch d.Name() {
+				case "vendor", ".git":
 					return filepath.SkipDir
 				}
 
 				return nil
 			}
 
-			if len(path) > 3 && path[len(path)-3:] == ".go" {
-				select {
-				case paths <- path:
-				case <-done:
-					return filepath.SkipAll
+			if len(path) < 3 || path[len(path)-3:] != ".go" {
+				return nil
+			}
+
+			if l.MaxFileSize > 0 {
+				info, err := d.Info()
+
+				if err == nil && info.Size() > l.MaxFileSize {
+					return nil
 				}
+			}
+
+			select {
+			case paths <- path:
+			case <-done:
+				return filepath.SkipAll
 			}
 
 			return nil
@@ -139,25 +156,29 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 
 	go func() {
 		wg.Wait()
+
 		close(results)
 	}()
 
-	limit := l.MaxIssues
-	final := make([]rules.Issue, 0, min(limit, 128))
+	capHint := 128
+
+	if l.MaxIssues > 0 && l.MaxIssues < capHint {
+		capHint = l.MaxIssues
+	}
+
+	final := make([]rules.Issue, 0, capHint)
 
 	for batch := range results {
-		if limit == 0 {
+		if l.MaxIssues == 0 {
 			final = append(final, batch...)
 			continue
-
 		}
 
 		cur := int(atomic.LoadInt64(&total))
-
-		remaining := limit - cur
+		remaining := l.MaxIssues - cur
 
 		if remaining <= 0 {
-			close(done)
+			stopOnce.Do(func() { close(done) })
 
 			break
 		}
@@ -167,10 +188,8 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 			atomic.AddInt64(&total, int64(len(batch)))
 		} else {
 			final = append(final, batch[:remaining]...)
-
-			atomic.StoreInt64(&total, int64(limit))
-
-			close(done)
+			atomic.StoreInt64(&total, int64(l.MaxIssues))
+			stopOnce.Do(func() { close(done) })
 
 			break
 		}
@@ -188,13 +207,8 @@ func processSingleFile(path string) ([]rules.Issue, error) {
 
 	fset := token.NewFileSet()
 
-	f, err := parser.ParseFile(
-		fset,
-		path,
-		src,
-		parser.SkipObjectResolution,
-	)
-	
+	f, err := parser.ParseFile(fset, path, src, parser.SkipObjectResolution)
+
 	if err != nil {
 		return nil, err
 	}

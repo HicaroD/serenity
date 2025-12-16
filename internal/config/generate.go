@@ -3,6 +3,8 @@ package config
 import "github.com/almeidazs/serenity/internal/rules"
 
 func GenDefaultConfig() *rules.Config {
+	var OneMBInBytes int64 = 1048576
+
 	config := rules.Config{
 		Schema: "https://json-schema.org/draft/2020-12/schema",
 		Naming: &rules.NamingRuleGroup{
@@ -94,6 +96,7 @@ func GenDefaultConfig() *rules.Config {
 			"**/vendor/**",
 			"**/*.test.go",
 		},
+		MaxFileSize: OneMBInBytes,
 	}
 
 	return &config
