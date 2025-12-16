@@ -113,4 +113,3 @@ type Issue struct {
 	Pos     token.Position
 	Message string
 }
-
