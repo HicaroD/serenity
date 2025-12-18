@@ -22,58 +22,49 @@ func isContextType(expr ast.Expr) bool {
 	return false
 }
 
-func CheckContextFirstParam(
-	f *ast.File,
+func CheckContextFirstParamNode(
+	n ast.Node,
 	fset *token.FileSet,
-	out []Issue,
 	cfg *LinterOptions,
 ) []Issue {
-	if cfg.Linter.Use != nil && !*cfg.Linter.Use {
-		return out
+	bestPractices := cfg.Linter.Rules.BestPractices
+	if bestPractices == nil {
+		return nil
 	}
 
-	if err := VerifyIssues(cfg, out); err != nil {
-		return out
+	if bestPractices.Use != nil && !*bestPractices.Use {
+		return nil
 	}
 
-	isBestPracticesOn := cfg.Linter.Rules.BestPractices == nil || (cfg.Linter.Rules.BestPractices.Use != nil && !*cfg.Linter.Rules.BestPractices.Use)
-	isRuleDisabled := cfg.Linter.Rules.BestPractices.UseContextInFirstParam == nil
-
-	if isBestPracticesOn || isRuleDisabled {
-		return out
+	if bestPractices.UseContextInFirstParam == nil {
+		return nil
 	}
 
-	ast.Inspect(f, func(n ast.Node) bool {
-		fn, ok := n.(*ast.FuncDecl)
-		if !ok {
-			return true
+	fn, ok := n.(*ast.FuncDecl)
+	if !ok {
+		return nil
+	}
+
+	params := fn.Type.Params
+	if params == nil || len(params.List) < 2 {
+		return nil
+	}
+
+	for i := 1; i < len(params.List); i++ {
+		p := params.List[i]
+
+		if isContextType(p.Type) {
+			return []Issue{{
+				Pos:     fset.Position(p.Pos()),
+				Message: "context.Context should be the first parameter",
+				Fix: func() {
+					FixContextFirstParam(fn)
+				},
+			}}
 		}
+	}
 
-		params := fn.Type.Params
-		if params == nil || len(params.List) < 2 {
-			return true
-		}
-
-		for i := 1; i < len(params.List); i++ {
-			p := params.List[i]
-
-			if isContextType(p.Type) {
-				out = append(out, Issue{
-					Pos:     fset.Position(p.Pos()),
-					Message: "context.Context should be the first parameter",
-					Fix: func() {
-						FixContextFirstParam(fn)
-					},
-				})
-
-				break
-			}
-		}
-
-		return true
-	})
-
-	return out
+	return nil
 }
 
 func FixContextFirstParam(fn *ast.FuncDecl) bool {

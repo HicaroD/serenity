@@ -19,7 +19,9 @@ func CheckNoDotImports(
 		return out
 	}
 
-	if cfg.Linter.Rules.Imports == nil {
+	if cfg.Linter.Rules.Imports == nil ||
+		(cfg.Linter.Rules.Imports.Use != nil && !*cfg.Linter.Rules.Imports.Use) ||
+		cfg.Linter.Rules.Imports.NoDotImports == nil {
 		return out
 	}
 

@@ -5,62 +5,64 @@ import (
 	"go/token"
 )
 
-func CheckMaxParams(
-	f *ast.File,
+func CheckMaxParamsNode(
+	n ast.Node,
 	fset *token.FileSet,
 	out []Issue,
 	cfg *LinterOptions,
 ) []Issue {
-	if cfg.Linter.Use != nil && !*cfg.Linter.Use {
-		return out
+	bestPractices := cfg.Linter.Rules.BestPractices
+
+	if bestPractices == nil {
+		return nil
+	}
+
+	if bestPractices.Use != nil && !*bestPractices.Use {
+		return nil
 	}
 
 	var limit int8 = 5
 	if err := VerifyIssues(cfg, out); err != nil {
-		return out
+		return nil
 	}
 
-	if cfg.Linter.Rules.BestPractices.MaxParams != nil && cfg.Linter.Rules.BestPractices.MaxParams.Quantity != nil {
-		limit = *cfg.Linter.Rules.BestPractices.MaxParams.Quantity
+	if bestPractices.MaxParams != nil &&
+		bestPractices.MaxParams.Quantity != nil {
+		limit = *bestPractices.MaxParams.Quantity
 	}
 
-	ast.Inspect(f, func(n ast.Node) bool {
-		fn, ok := n.(*ast.FuncDecl)
-		if !ok {
-			return true
+	fn, ok := n.(*ast.FuncDecl)
+	if !ok {
+		return nil
+	}
+
+	params := fn.Type.Params
+	if params == nil {
+		return nil
+	}
+
+	count := 0
+
+	for _, field := range params.List {
+		count += len(field.Names)
+
+		if len(field.Names) == 0 {
+			count++
 		}
+	}
 
-		params := fn.Type.Params
-		if params == nil {
-			return true
-		}
+	if int8(count) <= limit {
+		return nil
+	}
 
-		count := 0
-
-		for _, field := range params.List {
-			count += len(field.Names)
-
-			if len(field.Names) == 0 {
-				count++
-			}
-		}
-
-		if int8(count) <= limit {
-			return true
-		}
-
-		out = append(out, Issue{
-			Pos:     fset.Position(fn.Pos()),
-			Message: "functions exceed the maximum parameter limit",
-			Fix: func() {
-				// Unsafe
-				params.List = params.List[:limit]
-			},
-		})
-
-		return true
+	out = append(out, Issue{
+		Pos:     fset.Position(fn.Pos()),
+		Message: "functions exceed the maximum parameter limit",
+		Fix: func() {
+			// Unsafe
+			params.List = params.List[:limit]
+		},
 	})
 
 	return out
 }
-
