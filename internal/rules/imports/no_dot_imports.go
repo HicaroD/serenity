@@ -1,33 +1,37 @@
-package rules
+package imports
 
 import (
 	"go/ast"
 	"go/token"
+
+	"github.com/serenitysz/serenity/internal/rules"
 )
 
 func CheckNoDotImports(
 	f *ast.File,
 	fset *token.FileSet,
-	out []Issue,
-	cfg *LinterOptions,
-) []Issue {
+	out []rules.Issue,
+	cfg *rules.LinterOptions,
+) []rules.Issue {
+	imports := cfg.Linter.Rules.Imports
+
 	if cfg.Linter.Use != nil && !*cfg.Linter.Use {
 		return out
 	}
 
-	if err := VerifyIssues(cfg, out); err != nil {
+	if err := rules.VerifyIssues(cfg, out); err != nil {
 		return out
 	}
 
-	if cfg.Linter.Rules.Imports == nil ||
-		(cfg.Linter.Rules.Imports.Use != nil && !*cfg.Linter.Rules.Imports.Use) ||
-		cfg.Linter.Rules.Imports.NoDotImports == nil {
+	if imports == nil ||
+		(imports.Use != nil && !*imports.Use) ||
+		imports.NoDotImports == nil {
 		return out
 	}
 
 	for _, i := range f.Imports {
 		if i.Name != nil && i.Name.Name == "." {
-			out = append(out, Issue{
+			out = append(out, rules.Issue{
 				Pos:     fset.Position(i.Name.NamePos),
 				Message: "Imports should not be named with '.' ",
 				Fix: func() {

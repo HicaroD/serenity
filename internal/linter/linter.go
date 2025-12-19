@@ -13,6 +13,8 @@ import (
 	"sync/atomic"
 
 	"github.com/serenitysz/serenity/internal/rules"
+	"github.com/serenitysz/serenity/internal/rules/bestpractices"
+	"github.com/serenitysz/serenity/internal/rules/imports"
 )
 
 type Linter struct {
@@ -99,10 +101,10 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 					}
 
 					ast.Inspect(f, func(n ast.Node) bool {
-						if res := rules.CheckContextFirstParamNode(n, fset, l.Config); len(res) > 0 {
+						if res := bestpractices.CheckContextFirstParamNode(n, fset, l.Config); len(res) > 0 {
 							local = append(local, res...)
 						}
-						if res := rules.CheckMaxParamsNode(n, fset, nil, l.Config); len(res) > 0 {
+						if res := bestpractices.CheckMaxParamsNode(n, fset, nil, l.Config); len(res) > 0 {
 							local = append(local, res...)
 						}
 
@@ -244,15 +246,16 @@ func (l *Linter) processSingleFile(path string) ([]rules.Issue, error) {
 
 	var issues []rules.Issue
 
-	if impIssues := rules.CheckNoDotImports(f, fset, nil, l.Config); len(impIssues) > 0 {
+	if impIssues := imports.CheckNoDotImports(f, fset, nil, l.Config); len(impIssues) > 0 {
 		issues = append(issues, impIssues...)
 	}
 
 	ast.Inspect(f, func(n ast.Node) bool {
-		if res := rules.CheckContextFirstParamNode(n, fset, l.Config); len(res) > 0 {
+		if res := bestpractices.CheckContextFirstParamNode(n, fset, l.Config); len(res) > 0 {
 			issues = append(issues, res...)
 		}
-		if res := rules.CheckMaxParamsNode(n, fset, nil, l.Config); len(res) > 0 {
+
+		if res := bestpractices.CheckMaxParamsNode(n, fset, nil, l.Config); len(res) > 0 {
 			issues = append(issues, res...)
 		}
 
@@ -276,4 +279,3 @@ func (l *Linter) processSingleFile(path string) ([]rules.Issue, error) {
 
 	return issues, nil
 }
-

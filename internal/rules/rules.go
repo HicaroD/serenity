@@ -94,7 +94,7 @@ type BestPracticesRulesGroup struct {
 }
 
 type MaxParams struct {
-	Quantity *int8 `json:"quantity,omitempty"`
+	Quantity *int16 `json:"quantity,omitempty"`
 }
 
 type CorrectnessRulesGroup struct {

@@ -1,16 +1,18 @@
-package rules
+package bestpractices
 
 import (
 	"go/ast"
 	"go/token"
+
+	"github.com/serenitysz/serenity/internal/rules"
 )
 
 func CheckMaxParamsNode(
 	n ast.Node,
 	fset *token.FileSet,
-	out []Issue,
-	cfg *LinterOptions,
-) []Issue {
+	out []rules.Issue,
+	cfg *rules.LinterOptions,
+) []rules.Issue {
 	bestPractices := cfg.Linter.Rules.BestPractices
 
 	if bestPractices == nil {
@@ -21,8 +23,8 @@ func CheckMaxParamsNode(
 		return nil
 	}
 
-	var limit int8 = 5
-	if err := VerifyIssues(cfg, out); err != nil {
+	var limit int16 = 5
+	if err := rules.VerifyIssues(cfg, out); err != nil {
 		return nil
 	}
 
@@ -41,21 +43,21 @@ func CheckMaxParamsNode(
 		return nil
 	}
 
-	count := 0
+	var count int16 = 0
 
 	for _, field := range params.List {
-		count += len(field.Names)
+		count += int16(len(field.Names))
 
 		if len(field.Names) == 0 {
 			count++
 		}
 	}
 
-	if int8(count) <= limit {
+	if limit > 0 && count <= limit {
 		return nil
 	}
 
-	out = append(out, Issue{
+	out = append(out, rules.Issue{
 		Pos:     fset.Position(fn.Pos()),
 		Message: "functions exceed the maximum parameter limit",
 		Fix: func() {

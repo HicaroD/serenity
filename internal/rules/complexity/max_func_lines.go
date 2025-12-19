@@ -1,0 +1,4 @@
+package complexity
+
+func Salve() {
+}
