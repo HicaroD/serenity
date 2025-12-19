@@ -210,7 +210,7 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 		}
 
 		if len(batch) > remaining {
-			final = append(final, batch...)
+			final = append(final, batch[:remaining]...)
 			atomic.StoreInt64(&total, int64(l.MaxIssues))
 			stopOnce.Do(func() {
 				close(done)
@@ -219,7 +219,7 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 			break
 		}
 
-		final = append(final, batch[:remaining]...)
+		final = append(final, batch...)
 		atomic.AddInt64(&total, int64(len(batch)))
 	}
 
