@@ -2,6 +2,7 @@ package linter
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -35,6 +37,12 @@ func New(write, unsafe bool, config *rules.LinterOptions, maxIssues int, maxFile
 	}
 }
 
+const (
+	defaultFileMode     = os.FileMode(0o644)
+	initialFileIssueCap = 0
+	finalFileIssueCap   = 32
+)
+
 func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 	info, err := os.Stat(root)
 	if err != nil {
@@ -51,7 +59,8 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 
 	workers := runtime.GOMAXPROCS(0)
 
-	paths := make(chan string, workers*4)
+	channelBufferMultiplier := workers * 4
+	paths := make(chan string, channelBufferMultiplier)
 	results := make(chan []rules.Issue, workers)
 
 	done := make(chan struct{})
@@ -66,9 +75,10 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 			defer wg.Done()
 
 			fset := token.NewFileSet()
-			local := make([]rules.Issue, 0, 32)
 
 			for {
+				local := make([]rules.Issue, initialFileIssueCap, finalFileIssueCap)
+
 				select {
 				case <-done:
 					return
@@ -92,7 +102,7 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 						continue
 					}
 
-					if l.Config.Linter.Use == nil && !*l.Config.Linter.Use {
+					if l.Config.Linter.Use != nil && !*l.Config.Linter.Use {
 						continue
 					}
 
@@ -125,7 +135,9 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 						var buf bytes.Buffer
 
 						if err := format.Node(&buf, fset, f); err == nil {
-							_ = os.WriteFile(path, buf.Bytes(), 0o644)
+							if err := os.WriteFile(path, buf.Bytes(), defaultFileMode); err != nil {
+								fmt.Fprintf(os.Stderr, "failed to write file %s: %v\n", path, err)
+							}
 						}
 					}
 
@@ -155,14 +167,14 @@ func (l *Linter) ProcessPath(root string) ([]rules.Issue, error) {
 			}
 
 			if d.IsDir() {
-				switch d.Name() {
-				case "vendor", ".git":
+				if d.Name() == "vendor" || d.Name() == ".git" {
 					return filepath.SkipDir
 				}
+
 				return nil
 			}
 
-			if len(path) < 3 || path[len(path)-3:] != ".go" {
+			if !strings.HasSuffix(path, ".go") {
 				return nil
 			}
 
@@ -240,7 +252,7 @@ func (l *Linter) processSingleFile(path string) ([]rules.Issue, error) {
 		return nil, err
 	}
 
-	if l.Config.Linter.Use == nil && !*l.Config.Linter.Use {
+	if l.Config.Linter.Use != nil && !*l.Config.Linter.Use {
 		return nil, nil
 	}
 
@@ -272,9 +284,10 @@ func (l *Linter) processSingleFile(path string) ([]rules.Issue, error) {
 		var buf bytes.Buffer
 
 		if err := format.Node(&buf, fset, f); err == nil {
-			_ = os.WriteFile(path, buf.Bytes(), 0o644)
+			if err := os.WriteFile(path, buf.Bytes(), defaultFileMode); err != nil {
+				return nil, fmt.Errorf("failed to write file %s: %w", path, err)
+			}
 		}
-
 	}
 
 	return issues, nil

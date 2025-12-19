@@ -61,6 +61,7 @@ func CheckMaxParamsNode(
 		Pos:     fset.Position(fn.Pos()),
 		Message: "functions exceed the maximum parameter limit",
 		Fix: func() {
+			// name := fn.Name.Name + "Options"
 			// Unsafe
 			params.List = params.List[:limit]
 		},

@@ -3,7 +3,7 @@ package config
 import "github.com/serenitysz/serenity/internal/rules"
 
 func GenDefaultConfig() *rules.LinterOptions {
-	var OneMBInBytes int64 = 1048576
+	var OneMBInBytes int64 = 1 * 1024 * 1024
 	var maxParams int8 = 5
 
 	config := rules.LinterOptions{
