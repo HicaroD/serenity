@@ -17,6 +17,10 @@ func (r *MaxParamsRule) Targets() []ast.Node {
 }
 
 func (r *MaxParamsRule) Run(runner *rules.Runner, node ast.Node) {
+	if runner.ShouldStop != nil && runner.ShouldStop() {
+		return
+	}
+
 	fn := node.(*ast.FuncDecl)
 
 	if fn.Type.Params == nil {
@@ -59,4 +63,3 @@ func (r *MaxParamsRule) Run(runner *rules.Runner, node ast.Node) {
 		ArgInt2: int(count),
 	})
 }
-
