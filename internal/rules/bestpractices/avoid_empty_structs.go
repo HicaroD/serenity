@@ -13,7 +13,7 @@ func (a *AvoidEmptyStructsRule) Name() string {
 }
 
 func (a *AvoidEmptyStructsRule) Targets() []ast.Node {
-	return []ast.Node{(*ast.StructType)(nil)}
+	return []ast.Node{(*ast.TypeSpec)(nil)}
 }
 
 func (a *AvoidEmptyStructsRule) Run(runner *rules.Runner, node ast.Node) {
@@ -26,7 +26,11 @@ func (a *AvoidEmptyStructsRule) Run(runner *rules.Runner, node ast.Node) {
 		return
 	}
 
-	st := node.(*ast.StructType)
+	t := node.(*ast.TypeSpec)
+	st, ok := t.Type.(*ast.StructType)
+	if !ok {
+		return
+	}
 
 	if st.Fields == nil || len(st.Fields.List) == 0 {
 		maxIssues := rules.GetMaxIssues(runner.Cfg)
@@ -39,6 +43,7 @@ func (a *AvoidEmptyStructsRule) Run(runner *rules.Runner, node ast.Node) {
 			ID:       rules.AvoidEmptyStructsID,
 			Pos:      runner.Fset.Position(st.Pos()),
 			Severity: rules.ParseSeverity(bp.AvoidEmptyStructs.Severity),
+			ArgStr1:  t.Name.Name,
 		})
 	}
 }

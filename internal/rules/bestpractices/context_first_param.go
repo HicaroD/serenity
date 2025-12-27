@@ -35,6 +35,7 @@ func (c *ContextFirstRule) Run(runner *rules.Runner, node ast.Node) {
 	cf := bp.UseContextInFirstParam
 	params := fn.Type.Params.List
 	maxIssues := rules.GetMaxIssues(runner.Cfg)
+
 	for i := 1; i < len(params); i++ {
 		p := params[i]
 
