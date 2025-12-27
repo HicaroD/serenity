@@ -26,6 +26,9 @@ func GetActiveRulesMap(cfg *rules.LinterOptions) map[reflect.Type][]rules.Rule {
 		if bp.MaxParams != nil {
 			register(&bestpractices.MaxParamsRule{})
 		}
+		if bp.UseContextInFirstParam != nil {
+			register(&bestpractices.ContextFirstRule{})
+		}
 	}
 
 	return activeRules
