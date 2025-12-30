@@ -52,7 +52,7 @@ func (n *NoBareReturnsRule) Run(runner *rules.Runner, node ast.Node) {
 	}
 
 	bp := runner.Cfg.Linter.Rules.BestPractices
-	if bp == nil || (bp.Use != nil && !*bp.Use) || bp.NoBareReturns == nil {
+	if bp == nil || (bp.Use != nil && !*bp.Use) || bp.NoBareReturns == nil || (bp.NoBareReturns.Use != nil && !*bp.NoBareReturns.Use) {
 		return
 	}
 
