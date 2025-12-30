@@ -79,6 +79,10 @@ func ApplyRecommended(cfg *rules.LinterOptions) {
 		rulesGroup.BestPractices.UseSliceCapacity = &rules.LinterBaseRule{Severity: "warn"}
 	}
 
+	if rulesGroup.BestPractices.NoBareReturns == nil {
+		rulesGroup.BestPractices.NoBareReturns = &rules.LinterBaseRule{Severity: "error"}
+	}
+
 	if rulesGroup.Complexity == nil {
 		rulesGroup.Complexity = &rules.ComplexityRulesGroup{}
 	}
