@@ -21,50 +21,52 @@ func (c *CheckMaxFuncLinesRule) Run(runner *rules.Runner, node ast.Node) {
 		return
 	}
 
+	complexity := runner.Cfg.Linter.Rules.Complexity
+
+	if complexity == nil || complexity.Use != nil && !*complexity.Use {
+		return
+	}
+
+	ruleConfig := complexity.MaxFuncLines
+
+	if ruleConfig == nil {
+		return
+	}
+
 	fn := node.(*ast.FuncDecl)
 
 	if fn.Body == nil {
 		return
 	}
 
-	complexity := runner.Cfg.Linter.Rules.Complexity
-	if complexity == nil {
-		return
-	}
-
-	if complexity.Use != nil && !*complexity.Use {
-		return
-	}
-
-	ruleConfig := complexity.MaxFuncLines
-	if ruleConfig == nil {
-		return
-	}
-
 	var limit int16 = 20
+
 	if ruleConfig.Max != nil {
 		limit = int16(*ruleConfig.Max)
 	}
 
-	start := runner.Fset.Position(fn.Pos()).Line
 	end := runner.Fset.Position(fn.End()).Line
-	lines := end - start + 1
+	start := runner.Fset.Position(fn.Pos()).Line
 
-	if int16(lines) <= limit {
+	linesCount := end - start + 1
+
+	if int16(linesCount) <= limit {
 		return
 	}
 
 	maxIssues := rules.GetMaxIssues(runner.Cfg)
-	if maxIssues > 0 && int16(len(*runner.Issues)) >= maxIssues {
+
+	if maxIssues > 0 && *runner.IssuesCount >= maxIssues {
 		return
 	}
 
+	*runner.IssuesCount++
+
 	*runner.Issues = append(*runner.Issues, rules.Issue{
+		ArgInt1:  int(limit),
+		ArgInt2:  linesCount,
 		ID:       rules.MaxFuncLinesID,
 		Pos:      runner.Fset.Position(fn.Pos()),
 		Severity: rules.ParseSeverity(ruleConfig.Severity),
-		ArgInt1:  int(limit),
-		ArgInt2:  lines,
 	})
 }
-

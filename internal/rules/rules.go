@@ -17,6 +17,8 @@ type Runner struct {
 	ShouldStop     func() bool
 	MutatedObjects map[types.Object]bool
 	TypesInfo      *types.Info
+	// TODO: Change to uint16 (unsigned)
+	IssuesCount *int16
 }
 
 type LinterOptions struct {

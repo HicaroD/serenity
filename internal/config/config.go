@@ -93,6 +93,7 @@ func ApplyRecommended(cfg *rules.LinterOptions) {
 
 	if rulesGroup.Complexity.MaxFuncLines.Max == nil {
 		m := 20
+
 		rulesGroup.Complexity.MaxFuncLines.Max = &m
 	}
 }

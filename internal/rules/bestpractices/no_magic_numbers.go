@@ -22,13 +22,15 @@ func (n *NoMagicNumbersRule) Run(runner *rules.Runner, node ast.Node) {
 		return
 	}
 
-	lit := node.(*ast.BasicLit)
-	if lit == nil {
+	bp := runner.Cfg.Linter.Rules.BestPractices
+
+	if bp == nil || (bp.Use != nil && !*bp.Use) || bp.NoMagicNumbers == nil || (bp.NoMagicNumbers.Use != nil && !*bp.NoMagicNumbers.Use) {
 		return
 	}
 
-	bp := runner.Cfg.Linter.Rules.BestPractices
-	if bp == nil || (bp.Use != nil && !*bp.Use) || bp.NoMagicNumbers == nil || (bp.NoMagicNumbers.Use != nil && !*bp.NoMagicNumbers.Use) {
+	lit := node.(*ast.BasicLit)
+
+	if lit == nil {
 		return
 	}
 
@@ -37,13 +39,16 @@ func (n *NoMagicNumbersRule) Run(runner *rules.Runner, node ast.Node) {
 	}
 
 	maxIssues := rules.GetMaxIssues(runner.Cfg)
-	if maxIssues > 0 && int16(len(*runner.Issues)) >= maxIssues {
+
+	if maxIssues > 0 && *runner.IssuesCount >= maxIssues {
 		return
 	}
 
 	if lit.Value == "0" || lit.Value == "1" || lit.Value == "-1" {
 		return
 	}
+
+	*runner.IssuesCount++
 
 	*runner.Issues = append(*runner.Issues, rules.Issue{
 		ID:       rules.NoMagicNumbersID,

@@ -24,6 +24,12 @@ func (n *NoBareReturnsRule) Run(runner *rules.Runner, node ast.Node) {
 		return
 	}
 
+	bp := runner.Cfg.Linter.Rules.BestPractices
+
+	if bp == nil || (bp.Use != nil && !*bp.Use) || bp.NoBareReturns == nil || (bp.NoBareReturns.Use != nil && !*bp.NoBareReturns.Use) {
+		return
+	}
+
 	var funcType *ast.FuncType
 	var body *ast.BlockStmt
 	var funcName string
@@ -38,7 +44,6 @@ func (n *NoBareReturnsRule) Run(runner *rules.Runner, node ast.Node) {
 		funcType = t.Type
 		body = t.Body
 		funcName = "anonymous"
-
 	default:
 		return
 	}
@@ -51,16 +56,11 @@ func (n *NoBareReturnsRule) Run(runner *rules.Runner, node ast.Node) {
 		return
 	}
 
-	bp := runner.Cfg.Linter.Rules.BestPractices
-	if bp == nil || (bp.Use != nil && !*bp.Use) || bp.NoBareReturns == nil || (bp.NoBareReturns.Use != nil && !*bp.NoBareReturns.Use) {
-		return
-	}
-
 	maxIssues := rules.GetMaxIssues(runner.Cfg)
 	severity := rules.ParseSeverity(bp.NoBareReturns.Severity)
 
 	ast.Inspect(body, func(n ast.Node) bool {
-		if maxIssues > 0 && int16(len(*runner.Issues)) >= maxIssues {
+		if maxIssues > 0 && *runner.IssuesCount >= maxIssues {
 			return false
 		}
 
@@ -71,6 +71,8 @@ func (n *NoBareReturnsRule) Run(runner *rules.Runner, node ast.Node) {
 			if len(t.Results) > 0 {
 				return false
 			}
+
+			*runner.IssuesCount++
 
 			*runner.Issues = append(*runner.Issues, rules.Issue{
 				ID:       rules.NoBareReturnsID,

@@ -120,6 +120,7 @@ func (l *Linter) analyzePackage(params analysisParams) ([]rules.Issue, error) {
 			Autofix:        l.Write || rules.CanAutoFix(l.Config),
 			Unsafe:         l.Unsafe,
 			Issues:         &issues,
+			IssuesCount:    new(int16),
 			MutatedObjects: mutatedObjects,
 			ShouldStop: func() bool {
 				return params.shouldStop != nil && params.shouldStop(len(allIssues)+len(issues))

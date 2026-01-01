@@ -21,22 +21,22 @@ func (r *NoDotImportsRule) Run(runner *rules.Runner, node ast.Node) {
 		return
 	}
 
-	importSpec := node.(*ast.ImportSpec)
-
 	imports := runner.Cfg.Linter.Rules.Imports
-	if imports == nil || (imports.Use != nil && !*imports.Use) {
+
+	if imports == nil || (imports.Use != nil && !*imports.Use) || imports.NoDotImports == nil || (imports.NoDotImports.Use != nil && !*imports.NoDotImports.Use) {
 		return
 	}
 
-	if imports.NoDotImports == nil || (imports.NoDotImports.Use != nil && !*imports.NoDotImports.Use) {
-		return
-	}
+	importSpec := node.(*ast.ImportSpec)
 
 	if importSpec.Name != nil && importSpec.Name.Name == "." {
 		maxIssues := rules.GetMaxIssues(runner.Cfg)
-		if maxIssues > 0 && int16(len(*runner.Issues)) >= maxIssues {
+
+		if maxIssues > 0 && *runner.IssuesCount >= maxIssues {
 			return
 		}
+
+		*runner.IssuesCount++
 
 		*runner.Issues = append(*runner.Issues, rules.Issue{
 			ID:       rules.NoDotImportsID,
@@ -45,4 +45,3 @@ func (r *NoDotImportsRule) Run(runner *rules.Runner, node ast.Node) {
 		})
 	}
 }
-

@@ -21,14 +21,15 @@ func (a *AlwaysPreferConstRule) Run(runner *rules.Runner, node ast.Node) {
 	if runner.ShouldStop != nil && runner.ShouldStop() {
 		return
 	}
+	bp := runner.Cfg.Linter.Rules.BestPractices
 
-	v := node.(*ast.ValueSpec)
-	if len(v.Values) == 0 {
+	if bp == nil || (bp.Use != nil && !*bp.Use) || bp.AlwaysPreferConst == nil || (bp.AlwaysPreferConst.Use != nil && !*bp.AlwaysPreferConst.Use) {
 		return
 	}
 
-	bp := runner.Cfg.Linter.Rules.BestPractices
-	if bp == nil || (bp.Use != nil && !*bp.Use) || bp.AlwaysPreferConst == nil || (bp.AlwaysPreferConst.Use != nil && !*bp.AlwaysPreferConst.Use) {
+	v := node.(*ast.ValueSpec)
+
+	if len(v.Values) == 0 {
 		return
 	}
 
@@ -36,6 +37,10 @@ func (a *AlwaysPreferConstRule) Run(runner *rules.Runner, node ast.Node) {
 	severity := rules.ParseSeverity(bp.AlwaysPreferConst.Severity)
 
 	for i, name := range v.Names {
+		if i >= len(v.Values) {
+			break
+		}
+
 		obj := runner.TypesInfo.Defs[name]
 
 		if obj == nil {
@@ -46,26 +51,23 @@ func (a *AlwaysPreferConstRule) Run(runner *rules.Runner, node ast.Node) {
 			continue
 		}
 
-		if i >= len(v.Values) {
-			break
-		}
-
 		if _, ok := v.Values[i].(*ast.BasicLit); !ok {
 			continue
 		}
 
 		if !runner.MutatedObjects[obj] {
-			if maxIssues > 0 && int16(len(*runner.Issues)) >= maxIssues {
+			if maxIssues > 0 && *runner.IssuesCount >= maxIssues {
 				return
 			}
 
+			*runner.IssuesCount++
+
 			*runner.Issues = append(*runner.Issues, rules.Issue{
-				ID:       rules.AlwaysPreferConstID,
-				Pos:      runner.Fset.Position(name.Pos()),
 				Severity: severity,
 				ArgStr1:  name.Name,
+				ID:       rules.AlwaysPreferConstID,
+				Pos:      runner.Fset.Position(name.Pos()),
 			})
 		}
-
 	}
 }

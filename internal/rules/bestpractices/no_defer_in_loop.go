@@ -25,6 +25,7 @@ func (d *NoDeferInLoopRule) Run(runner *rules.Runner, node ast.Node) {
 	}
 
 	bp := runner.Cfg.Linter.Rules.BestPractices
+
 	if bp == nil || (bp.Use != nil && !*bp.Use) || bp.NoDeferInLoop == nil || (bp.NoDeferInLoop.Use != nil && !*bp.NoDeferInLoop.Use) {
 		return
 	}
@@ -47,24 +48,20 @@ func (d *NoDeferInLoopRule) Run(runner *rules.Runner, node ast.Node) {
 	severity := rules.ParseSeverity(bp.NoDeferInLoop.Severity)
 
 	ast.Inspect(body, func(n ast.Node) bool {
-		if maxIssues > 0 && int16(len(*runner.Issues)) >= maxIssues {
+		if maxIssues > 0 && *runner.IssuesCount >= maxIssues {
 			return false
 		}
 
 		switch t := n.(type) {
-		case *ast.FuncLit:
+		case *ast.FuncLit, *ast.RangeStmt, *ast.ForStmt:
 			return false
-
-		case *ast.RangeStmt, *ast.ForStmt:
-			return false
-
 		case *ast.DeferStmt:
+			*runner.IssuesCount++
 			*runner.Issues = append(*runner.Issues, rules.Issue{
+				Severity: severity,
 				ID:       rules.NoDeferInLoopID,
 				Pos:      runner.Fset.Position(t.Pos()),
-				Severity: severity,
 			})
-
 		}
 
 		return true
