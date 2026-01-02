@@ -79,13 +79,16 @@ func GetActiveRulesMap(cfg *rules.LinterOptions) map[reflect.Type][]rules.Rule {
 		}
 	}
 
-	if n := r.Naming; n != nil  && (n.Use == nil || *n.Use) {
+	if n := r.Naming; n != nil && (n.Use == nil || *n.Use) {
 		if n.ReceiverNames != nil {
 			register(&naming.ReceiverNamesRule{})
 		}
 
 		if n.ImportedIdentifiers != nil {
 			register(&naming.ImportedIdentifiersRule{})
+		}
+		if n.ExportedIdentifiers != nil {
+			register(&naming.ExportedIdentifiersRule{})
 		}
 	}
 

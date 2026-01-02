@@ -7,7 +7,9 @@ import (
 	"github.com/serenitysz/serenity/internal/rules"
 )
 
-type ImportedIdentifiersRule struct{}
+type ImportedIdentifiersRule struct {
+	re *regexp.Regexp
+}
 
 func (r *ImportedIdentifiersRule) Name() string {
 	return "imported-identifiers"
@@ -28,24 +30,30 @@ func (r *ImportedIdentifiersRule) Run(runner *rules.Runner, node ast.Node) {
 		return
 	}
 
-	maxIssues := rules.GetMaxIssues(runner.Cfg)
-
-	if maxIssues > 0 && *runner.IssuesCount >= maxIssues {
+	if max := rules.GetMaxIssues(runner.Cfg); max > 0 && *runner.IssuesCount >= max {
 		return
 	}
 
-	re, _ := regexp.Compile(*naming.ImportedIdentifiers.Pattern)
+	if r.re == nil {
+		re, err := regexp.Compile(*naming.ExportedIdentifiers.Pattern)
+
+		if err != nil {
+			return
+		}
+
+		r.re = re
+	}
 
 	spec := node.(*ast.ImportSpec)
 	name := spec.Name
 
-	if name != nil && !re.MatchString(name.Name)  {
+	if name != nil && !r.re.MatchString(name.Name) {
 		*runner.IssuesCount++
 
 		*runner.Issues = append(*runner.Issues, rules.Issue{
 			ArgStr1:  name.Name,
 			ID:       rules.ImportedIdentifiersID,
-			Pos:      runner.Fset.Position(spec.Path.ValuePos),
+			Pos:      runner.Fset.Position(spec.Pos()),
 			Severity: rules.ParseSeverity(naming.ImportedIdentifiers.Severity),
 		})
 	}
