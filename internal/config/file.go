@@ -15,7 +15,7 @@ func GetConfigFilePath() (string, error) {
 	}
 
 	wd, err := os.Getwd()
-	
+
 	if err != nil {
 		return "", fmt.Errorf("cannot get working directory: %w", err)
 	}

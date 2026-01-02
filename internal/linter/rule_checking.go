@@ -6,7 +6,9 @@ import (
 	"github.com/serenitysz/serenity/internal/rules"
 	"github.com/serenitysz/serenity/internal/rules/bestpractices"
 	"github.com/serenitysz/serenity/internal/rules/complexity"
+	"github.com/serenitysz/serenity/internal/rules/correctness"
 	"github.com/serenitysz/serenity/internal/rules/imports"
+	"github.com/serenitysz/serenity/internal/rules/naming"
 )
 
 func GetActiveRulesMap(cfg *rules.LinterOptions) map[reflect.Type][]rules.Rule {
@@ -28,6 +30,9 @@ func GetActiveRulesMap(cfg *rules.LinterOptions) map[reflect.Type][]rules.Rule {
 	if imp := r.Imports; imp != nil && (imp.Use == nil || *imp.Use) {
 		if imp.NoDotImports != nil {
 			register(&imports.NoDotImportsRule{})
+		}
+		if imp.DisallowedPackages != nil {
+			register(&imports.DisallowedPackagesRule{})
 		}
 	}
 
@@ -65,6 +70,22 @@ func GetActiveRulesMap(cfg *rules.LinterOptions) map[reflect.Type][]rules.Rule {
 	if cp := r.Complexity; cp != nil && (cp.Use == nil || *cp.Use) {
 		if cp.MaxFuncLines != nil {
 			register(&complexity.CheckMaxFuncLinesRule{})
+		}
+	}
+
+	if crr := r.Correctness; crr != nil && (crr.Use == nil || *crr.Use) {
+		if crr.EmptyBlock != nil {
+			register(&correctness.EmptyBlockRule{})
+		}
+	}
+
+	if n := r.Naming; n != nil  && (n.Use == nil || *n.Use) {
+		if n.ReceiverNames != nil {
+			register(&naming.ReceiverNamesRule{})
+		}
+
+		if n.ImportedIdentifiers != nil {
+			register(&naming.ImportedIdentifiersRule{})
 		}
 	}
 
