@@ -96,6 +96,7 @@ type LinterRulesGroup struct {
 	Correctness    *CorrectnessRulesGroup   `json:"correctness,omitempty" yaml:"correctness,omitempty" toml:"correctness,omitempty"`
 	Complexity     *ComplexityRulesGroup    `json:"complexity,omitempty" yaml:"complexity,omitempty" toml:"complexity,omitempty"`
 	Naming         *NamingRulesGroup        `json:"naming,omitempty" yaml:"naming,omitempty" toml:"naming,omitempty"`
+	Style          *StyleRulesGroup         `json:"style,omitempty" yaml:"style,omitempty" toml:"style,omitempty"`
 }
 
 type ErrorHandlingRulesGroup struct {
