@@ -19,13 +19,15 @@ var checkCmd = &cobra.Command{
 }
 
 var (
-	maxFileSize   int64
 	write, unsafe bool
+	maxFileSize   int64
+	configPath    string
 )
 
 func init() {
 	checkCmd.Flags().BoolVarP(&unsafe, "unsafe", "u", false, "Apply unsafe fixes")
 	checkCmd.Flags().BoolVarP(&write, "write", "w", false, "Write changes to files")
+	checkCmd.Flags().StringVarP(&configPath, "config", "c", "", "Use a custom config in the check")
 	checkCmd.Flags().Int64VarP(&maxFileSize, "max-file-size", "m", 0, "Use a custom maximum file size in the check")
 
 	rootCmd.AddCommand(checkCmd)
@@ -34,12 +36,18 @@ func init() {
 func Check(cmd *cobra.Command, args []string) error {
 	var linterCfg *rules.LinterOptions
 
-	path, err := config.GetConfigFilePath()
-	if err != nil {
-		return err
+	if configPath == "" {
+		path, err := config.GetConfigFilePath()
+
+		if err != nil {
+			return err
+		}
+
+		configPath = path
 	}
 
-	exists, err := config.CheckHasConfigFile(path)
+	exists, err := config.CheckHasConfigFile(configPath)
+
 	if err != nil {
 		return err
 	}
@@ -47,10 +55,12 @@ func Check(cmd *cobra.Command, args []string) error {
 	linterCfg = config.GenDefaultConfig(new(bool))
 
 	if exists {
-		cfg, err := config.ReadConfig(path)
+		cfg, err := config.ReadConfig(configPath)
+
 		if err != nil {
 			return err
 		}
+
 		linterCfg = cfg
 	}
 
@@ -59,6 +69,7 @@ func Check(cmd *cobra.Command, args []string) error {
 	var issues []rules.Issue
 
 	maxIssues, err := cmd.Flags().GetInt("max-issues")
+
 	if err != nil {
 		return err
 	}
@@ -72,6 +83,7 @@ func Check(cmd *cobra.Command, args []string) error {
 	for _, v := range args {
 		if v == "" || v == "." {
 			wd, err := os.Getwd()
+
 			if err != nil {
 				return fmt.Errorf("error to get working directory: %w", err)
 			}
@@ -80,6 +92,7 @@ func Check(cmd *cobra.Command, args []string) error {
 		}
 
 		i, err := l.ProcessPath(v)
+
 		if err != nil {
 			return err
 		}

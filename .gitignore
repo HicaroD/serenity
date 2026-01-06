@@ -1,6 +1,5 @@
 test/
 serenity
-serenity.json
+serenity*
 
 main
-serenity

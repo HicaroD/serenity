@@ -1,11 +1,8 @@
 package cmd
 
 import (
-	"cmp"
-	"errors"
 	"fmt"
-	"os"
-	"strings"
+	"path/filepath"
 
 	"github.com/serenitysz/serenity/internal/config"
 	"github.com/serenitysz/serenity/internal/prompts"
@@ -19,7 +16,7 @@ var (
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Create a new Serenity project by creating a serenity.json file",
+	Short: "Create a new Serenity project by creating a serenity config file",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if interactive {
 			return createSerenityInteractive()
@@ -35,21 +32,24 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 }
 
+var supportedConfigExts = map[string]struct{}{
+	".json": {},
+	".yaml": {},
+	".yml":  {},
+	".toml": {},
+}
+
+func isSupportedConfig(path string) bool {
+	_, ok := supportedConfigExts[filepath.Ext(path)]
+
+	return ok
+}
+
 func createSerenity() error {
-	path, err := config.GetConfigFilePath()
+	path := "serenity.json"
 
-	if err != nil {
-		return err
-	}
-
-	exists, err := config.CheckHasConfigFile(path)
-
-	if err != nil {
-		return err
-	}
-
-	if exists {
-		return fmt.Errorf("config file already exists at %s", path)
+	if ok, _ := config.CheckHasConfigFile(path); ok {
+		return fmt.Errorf("config file already exists: %s", path)
 	}
 
 	autofix := false
@@ -59,10 +59,27 @@ func createSerenity() error {
 }
 
 func createSerenityInteractive() error {
-	defaultPath := cmp.Or(os.Getenv("SERENITY_CONFIG_PATH"), "serenity.json")
+	format, err := prompts.Input(
+		"Which config format do you want to use? (JSON, YAML, TOML)", "JSON")
+
+	if err != nil {
+		return err
+	}
+
+	ext, ok := map[string]string{
+		"JSON": ".json",
+		"YAML": ".yaml",
+		"TOML": ".toml",
+	}[format]
+
+	if !ok {
+		return fmt.Errorf("unsupported config format: %s", format)
+	}
+
+	defaultPath := "serenity" + ext
 
 	path, err := prompts.Input(
-		"Which configuration path location do you want to use",
+		"Config file path",
 		defaultPath,
 	)
 
@@ -70,22 +87,12 @@ func createSerenityInteractive() error {
 		return err
 	}
 
-	if path == "" {
-		return errors.New("config path cannot be empty")
+	if !isSupportedConfig(path) {
+		return fmt.Errorf("unsupported config format: %s", filepath.Ext(path))
 	}
 
-	if !strings.HasSuffix(path, ".json") {
-		return errors.New("config file must have .json extension")
-	}
-
-	exists, err := config.CheckHasConfigFile(path)
-
-	if err != nil {
-		return err
-	}
-
-	if exists {
-		overwrite, err := prompts.Confirm("Config file already exists. Overwrite?")
+	if ok, _ := config.CheckHasConfigFile(path); ok {
+		overwrite, err := prompts.Confirm("Config already exists. Overwrite?")
 
 		if err != nil {
 			return err
@@ -96,7 +103,7 @@ func createSerenityInteractive() error {
 		}
 	}
 
-	strict, err := prompts.Confirm("Enable strict mode? (recommended)")
+	strict, err := prompts.Confirm("Enable strict preset?")
 
 	if err != nil {
 		return err
@@ -118,23 +125,13 @@ func createSerenityInteractive() error {
 }
 
 func createConfig(path string, cfg *rules.LinterOptions) error {
-	fmt.Print("Creating serenity.json config file...")
+	fmt.Printf("Creating %s...\n", path)
 
 	if err := config.CreateConfigFile(cfg, path); err != nil {
 		return err
 	}
 
-	defaultSerenityPath := "serenity.json"
-
-	if path != defaultSerenityPath {
-		if err := os.Setenv("SERENITY_CONFIG_PATH", path); err != nil {
-			return err
-		}
-
-		fmt.Printf("\nSetting SERENITY_CONFIG_PATH as \"%s\" in env file", path)
-	}
-
-	fmt.Println("\nConfig file created successfully.")
+	fmt.Println("Config file created successfully.")
 
 	return nil
 }
