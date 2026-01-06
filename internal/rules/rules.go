@@ -114,19 +114,19 @@ type ImportRulesGroup struct {
 }
 
 type BestPracticesRulesGroup struct {
-	Use                    bool                 `json:"use" yaml:"use" toml:"use"`
-	SimplifyBooleanReturn  *LinterBaseRule      `json:"simplifyBooleanReturn,omitempty" yaml:"simplifyBooleanReturn,omitempty" toml:"simplifyBooleanReturn,omitempty"`
-	GetMustReturnValue     *LinterBaseRule      `json:"getMustReturnValue,omitempty" yaml:"getMustReturnValue,omitempty" toml:"getMustReturnValue,omitempty"`
-	PreferEarlyReturn      *LinterBaseRule      `json:"preferEarlyReturn,omitempty" yaml:"preferEarlyReturn,omitempty" toml:"preferEarlyReturn,omitempty"`
-	RedundantErrorCheck    *LinterBaseRule      `json:"redundantErrorCheck,omitempty" yaml:"redundantErrorCheck,omitempty" toml:"redundantErrorCheck,omitempty"`
-	NoDeferInLoop          *LinterBaseRule      `json:"noDeferInLoop,omitempty" yaml:"noDeferInLoop,omitempty" toml:"noDeferInLoop,omitempty"`
-	UseContextInFirstParam *LinterBaseRule      `json:"useContextInFirstParam,omitempty" yaml:"useContextInFirstParam,omitempty" toml:"useContextInFirstParam,omitempty"`
-	NoBareReturns          *LinterBaseRule      `json:"noBareReturns,omitempty" yaml:"noBareReturns,omitempty" toml:"noBareReturns,omitempty"`
-	NoMagicNumbers         *LinterBaseRule      `json:"noMagicNumbers,omitempty" yaml:"noMagicNumbers,omitempty" toml:"noMagicNumbers,omitempty"`
-	UseSliceCapacity       *LinterBaseRule      `json:"useSliceCapacity,omitempty" yaml:"useSliceCapacity,omitempty" toml:"useSliceCapacity,omitempty"`
-	MaxParams              *LinterIssuesOptions `json:"maxParams,omitempty" yaml:"maxParams,omitempty" toml:"maxParams,omitempty"`
-	AvoidEmptyStructs      *LinterBaseRule      `json:"avoidEmptyStructs,omitempty" yaml:"avoidEmptyStructs,omitempty" toml:"avoidEmptyStructs,omitempty"`
-	AlwaysPreferConst      *LinterBaseRule      `json:"alwaysPreferConst,omitempty" yaml:"alwaysPreferConst,omitempty" toml:"alwaysPreferConst,omitempty"`
+	Use                    bool                  `json:"use" yaml:"use" toml:"use"`
+	SimplifyBooleanReturn  *LinterBaseRule       `json:"simplifyBooleanReturn,omitempty" yaml:"simplifyBooleanReturn,omitempty" toml:"simplifyBooleanReturn,omitempty"`
+	GetMustReturnValue     *LinterBaseRule       `json:"getMustReturnValue,omitempty" yaml:"getMustReturnValue,omitempty" toml:"getMustReturnValue,omitempty"`
+	PreferEarlyReturn      *LinterBaseRule       `json:"preferEarlyReturn,omitempty" yaml:"preferEarlyReturn,omitempty" toml:"preferEarlyReturn,omitempty"`
+	RedundantErrorCheck    *LinterBaseRule       `json:"redundantErrorCheck,omitempty" yaml:"redundantErrorCheck,omitempty" toml:"redundantErrorCheck,omitempty"`
+	NoDeferInLoop          *LinterBaseRule       `json:"noDeferInLoop,omitempty" yaml:"noDeferInLoop,omitempty" toml:"noDeferInLoop,omitempty"`
+	UseContextInFirstParam *LinterBaseRule       `json:"useContextInFirstParam,omitempty" yaml:"useContextInFirstParam,omitempty" toml:"useContextInFirstParam,omitempty"`
+	NoBareReturns          *LinterBaseRule       `json:"noBareReturns,omitempty" yaml:"noBareReturns,omitempty" toml:"noBareReturns,omitempty"`
+	NoMagicNumbers         *LinterBaseRule       `json:"noMagicNumbers,omitempty" yaml:"noMagicNumbers,omitempty" toml:"noMagicNumbers,omitempty"`
+	UseSliceCapacity       *LinterBaseRule       `json:"useSliceCapacity,omitempty" yaml:"useSliceCapacity,omitempty" toml:"useSliceCapacity,omitempty"`
+	MaxParams              *AnyMaxValueBasedRule `json:"maxParams,omitempty" yaml:"maxParams,omitempty" toml:"maxParams,omitempty"`
+	AvoidEmptyStructs      *LinterBaseRule       `json:"avoidEmptyStructs,omitempty" yaml:"avoidEmptyStructs,omitempty" toml:"avoidEmptyStructs,omitempty"`
+	AlwaysPreferConst      *LinterBaseRule       `json:"alwaysPreferConst,omitempty" yaml:"alwaysPreferConst,omitempty" toml:"alwaysPreferConst,omitempty"`
 }
 
 type CorrectnessRulesGroup struct {
