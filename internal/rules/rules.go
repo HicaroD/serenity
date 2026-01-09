@@ -246,6 +246,7 @@ const (
 	MaxParamsID
 	AvoidEmptyStructsID
 	AlwaysPreferConstID
+	GetMustReturnValueID
 
 	// CORRECTNESS
 

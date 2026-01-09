@@ -28,6 +28,7 @@ var registry = map[uint16]RuleMetadata{
 	MaxParamsID:              {ID: MaxParamsID, Name: "max-params", Template: "function exceeds the maximum parameter limit of %d (actual: %d)"},
 	AvoidEmptyStructsID:      {ID: AvoidEmptyStructsID, Name: "avoid-empty-structs", Template: "empty struct declaration found"},
 	AlwaysPreferConstID:      {ID: AlwaysPreferConstID, Name: "always-prefer-const", Template: "variable %q should be a constant"},
+	GetMustReturnValueID:     RuleMetadata{ID: GetMustReturnValueID, Name: "get-must-return-value", Template: `functions prefixed with "Get" must return at least one non-error value`},
 
 	// --- CORRECTNESS ---
 	UnusedReceiverID:  {ID: UnusedReceiverID, Name: "unused-receiver", Template: "method receiver %q is not used inside the function"},

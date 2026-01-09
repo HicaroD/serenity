@@ -83,6 +83,9 @@ func GetActiveRulesMap(cfg *rules.LinterOptions) map[reflect.Type][]rules.Rule {
 		if bp.NoBareReturns != nil {
 			register(&bestpractices.NoBareReturnsRule{})
 		}
+		if bp.GetMustReturnValue != nil {
+			register(&bestpractices.GetMustReturnValueRule{})
+		}
 	}
 
 	if cp := r.Complexity; cp != nil && cp.Use {
