@@ -39,6 +39,7 @@ var registry = map[uint16]RuleMetadata{
 
 	// --- COMPLEXITY ---
 	MaxFuncLinesID:         {ID: MaxFuncLinesID, Name: "max-func-lines", Template: "function exceeds the maximum line limit of %d (actual: %d)"},
+	MaxLineLengthID:        {ID: MaxLineLengthID, Name: "max-line-length", Template: "line exceeds maximum length of %d (actual: %d)"},
 	MaxNestingDepthID:      {ID: MaxNestingDepthID, Name: "max-nesting-depth", Template: "function exceeds maximum nesting depth of %d"},
 	CyclomaticComplexityID: {ID: CyclomaticComplexityID, Name: "cyclomatic-complexity", Template: "function has cyclomatic complexity of %d (max: %d)"},
 
@@ -64,7 +65,7 @@ func FormatMessage(issue Issue) string {
 	}
 
 	switch issue.ID {
-	case MaxParamsID, MaxFuncLinesID, CyclomaticComplexityID, AmbiguousReturnID:
+	case MaxParamsID, MaxFuncLinesID, CyclomaticComplexityID, AmbiguousReturnID, MaxLineLengthID:
 		return fmt.Sprintf(meta.Template, issue.ArgInt1, issue.ArgInt2)
 
 	case MaxNestingDepthID:
