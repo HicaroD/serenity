@@ -1,12 +1,7 @@
 package cmd
 
 import (
-	"fmt"
-	"runtime"
-
-	"github.com/serenitysz/serenity/internal/config"
-	"github.com/serenitysz/serenity/internal/exception"
-	"github.com/serenitysz/serenity/internal/version"
+	"github.com/serenitysz/serenity/internal/cmds/status"
 	"github.com/spf13/cobra"
 )
 
@@ -14,40 +9,10 @@ var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Display the current status of Serenity",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return getStatus()
+		return status.Get()
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(statusCmd)
-}
-
-func getStatus() error {
-	fmt.Println("Serenity:")
-	fmt.Printf("  Commit:            		%s\n", version.Commit)
-	fmt.Printf("  Version:                      %s\n", version.Version)
-
-	fmt.Println("\nPlatform:")
-	fmt.Printf("  OS:                           %s\n", runtime.GOOS)
-	fmt.Printf("  CPU Architecture:             %s\n", runtime.GOARCH)
-	fmt.Printf("  GO_VERSION:                   %s\n", runtime.Version())
-
-	fmt.Println("\nSerenity Configuration:")
-
-	path, err := config.SearchConfigPath()
-
-	if err != nil {
-		return exception.InternalError("%v", err)
-	}
-
-	status := "Not found"
-
-	if path != "" {
-		status = "Loaded successfully"
-	}
-
-	fmt.Printf("  Status:                       %s\n", status)
-	fmt.Printf("  Path:                         %s\n", path)
-
-	return nil
 }
