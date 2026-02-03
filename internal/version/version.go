@@ -1,4 +1,7 @@
 package version
 
-// Current version and commit hash of the CLI
-var Commit, Version string = "dirty", "1.0.0"
+// Current commit hash of the CLI
+var Commit = "dirty"
+
+// Current version of the CLI
+var Version string = "1.0.0"
